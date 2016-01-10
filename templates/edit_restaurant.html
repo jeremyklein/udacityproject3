@@ -1,0 +1,11 @@
+<html>
+
+<body>
+
+	<form method="post" action="{{url_for('edit',restaurant_id=restaurant.id)}}">
+		<p><label>Name</label>{{ restaurant.name }}<input type="text" name="name"></p>
+		<p><button type="submit">Edit</button></p>
+	</form>
+</body>
+
+</html>

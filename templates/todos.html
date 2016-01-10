@@ -1,0 +1,19 @@
+<html>
+
+<body>
+
+{% for todo in todos %}
+<span><a href="{{ url_for('viewTodo', todo_id=todo.id) }}"<b>{{ todo.name }}</b></span>
+<span>
+	<a href="{{ url_for('editTodo', todo_id=todo.id)}}">edit</a>
+</span>
+<span>
+	<a href="{{ url_for('deleteTodo', todo_id=todo.id)}}">delete</a>
+</span>
+
+
+{% endfor %}
+<p><a href="{{ url_for('addTodo')}}">Add New Todo</a></p>
+</body>
+
+</html>
