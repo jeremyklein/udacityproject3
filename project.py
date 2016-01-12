@@ -18,10 +18,10 @@ import json
 from flask import make_response
 import requests
 
-#Loads client secret from file
+# Loads client secret from file
 CLIENT_ID = json.loads(
     open('client_secrets.json', 'r').read())['web']['client_id']
-#Configure application name from google OAUTH2
+# Configure application name from google OAUTH2
 APPLICATION_NAME = "Web client 1"
 
 # resource for authenticating with Google's OAUTH2 service
@@ -106,7 +106,7 @@ def gconnect():
     print "done!"
     return output
 
-#log out of google OAUTH2 stuff service
+# log out of google OAUTH2 stuff service
 @app.route('/gdisconnect')
 def gdisconnect():
     access_token = login_session['access_token']
@@ -139,6 +139,7 @@ def gdisconnect():
     	return response
 
 # login service
+@app.route('/')
 @app.route('/login')
 def login():
 	state = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in xrange(32))
@@ -151,13 +152,13 @@ def allTodo():
 	todos=session.query(Todo).all()
 	return render_template('todos.html', todos=todos)
 
-#api for full list of todos
+# api for full list of todos
 @app.route('/todos/JSON')
 def allTodoJSON():
 	todos=session.query(Todo).all()
 	return jsonify(todos =[todo.serialize for todo in todos])
 
-#add a todo
+# add a todo
 @app.route('/add/todo', methods=['GET','POST'])
 def addTodo():
 	if 'username' not in login_session:
@@ -192,9 +193,9 @@ def viewTodoJSON(todo_id):
 def editTodo(todo_id):
 	if 'username' not in login_session:
 		return redirect(url_for('login'))
-	todo = session.query(Todo).get(todo_id) #get the todo you want to edit
+	todo = session.query(Todo).get(todo_id) #  get the todo you want to edit
 	if (request.method=='GET'):
-	    return render_template('edit_todo.html', todo=todo) #render the edit Todo template
+	    return render_template('edit_todo.html', todo=todo) #  render the edit Todo template
 	if (request.method=='POST'):
 		todo.name=request.form['name']
 		todo.description=request.form['description']
