@@ -21,10 +21,11 @@ class Todo(Base):
     def serialize(self):
 
         return {
-        'name' : self.name,
-        'description': self.description,
-        'minutes': self.minutes
+            'name': self.name,
+            'description': self.description,
+            'minutes': self.minutes
         }
+
 
 class User(Base):
     __tablename__ = 'users'
@@ -39,9 +40,9 @@ class User(Base):
     def serialize(self):
 
         return {
-        'name' : self.name,
-        'picture': self.picture,
-        'email': self.email
+            'name': self.name,
+            'picture': self.picture,
+            'email': self.email
         }
 
 

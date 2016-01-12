@@ -1,15 +1,16 @@
 from flask import Flask, request, redirect, url_for, render_template, jsonify, session as login_session, flash
-import random, string
+import random
+import string
 app = Flask(__name__)
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, query
 from database_setup import Base, Todo, User
-engine= create_engine('sqlite:///TodoWithUsers.db')
-Base.metadata.bind=engine
+engine = create_engine('sqlite:///TodoWithUsers.db')
+Base.metadata.bind = engine
 
 DBSession = sessionmaker(bind=engine)
-session=DBSession()
+session = DBSession()
 
 from oauth2client.client import flow_from_clientsecrets
 from oauth2client.client import FlowExchangeError
@@ -25,6 +26,8 @@ CLIENT_ID = json.loads(
 APPLICATION_NAME = "Web client 1"
 
 # resource for authenticating with Google's OAUTH2 service
+
+
 @app.route('/gconnect', methods=['POST'])
 def gconnect():
     # Validate state token
@@ -107,6 +110,8 @@ def gconnect():
     return output
 
 # log out of google OAUTH2 stuff service
+
+
 @app.route('/gdisconnect')
 def gdisconnect():
     access_token = login_session['access_token']
@@ -114,106 +119,122 @@ def gdisconnect():
     print 'User name is: '
     print login_session['username']
     if access_token is None:
- 	print 'Access Token is None'
-    	response = make_response(json.dumps('Current user not connected.'), 401)
-    	response.headers['Content-Type'] = 'application/json'
-    	return response
-    url = 'https://accounts.google.com/o/oauth2/revoke?token=%s' % login_session['access_token']
+        print 'Access Token is None'
+        response = make_response(json.dumps(
+            'Current user not connected.'), 401)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+    url = 'https://accounts.google.com/o/oauth2/revoke?token=%s' % login_session[
+        'access_token']
     h = httplib2.Http()
     result = h.request(url, 'GET')[0]
     print 'result is '
     print result
     if result['status'] == '200':
-	del login_session['access_token']
-    	del login_session['gplus_id']
-    	del login_session['username']
-    	del login_session['email']
-    	del login_session['picture']
-    	response = make_response(json.dumps('Successfully disconnected.'), 200)
-    	response.headers['Content-Type'] = 'application/json'
-    	return response
+        del login_session['access_token']
+        del login_session['gplus_id']
+        del login_session['username']
+        del login_session['email']
+        del login_session['picture']
+        response = make_response(json.dumps('Successfully disconnected.'), 200)
+        response.headers['Content-Type'] = 'application/json'
+        return response
     else:
 
-    	response = make_response(json.dumps('Failed to revoke token for given user.', 400))
-    	response.headers['Content-Type'] = 'application/json'
-    	return response
+        response = make_response(json.dumps(
+            'Failed to revoke token for given user.', 400))
+        response.headers['Content-Type'] = 'application/json'
+        return response
 
 # login service
+
+
 @app.route('/')
 @app.route('/login')
 def login():
-	state = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in xrange(32))
-	login_session['state'] = state
-	return render_template('login.html', STATE= state)
+    state = ''.join(random.choice(string.ascii_uppercase + string.digits)
+                    for x in xrange(32))
+    login_session['state'] = state
+    return render_template('login.html', STATE=state)
 
 # main page/ shows all users todos
+
+
 @app.route('/todos')
 def allTodo():
-	todos=session.query(Todo).all()
-	return render_template('todos.html', todos=todos)
+    todos = session.query(Todo).all()
+    return render_template('todos.html', todos=todos)
 
 # api for full list of todos
+
+
 @app.route('/todos/JSON')
 def allTodoJSON():
-	todos=session.query(Todo).all()
-	return jsonify(todos =[todo.serialize for todo in todos])
+    todos = session.query(Todo).all()
+    return jsonify(todos=[todo.serialize for todo in todos])
 
 # add a todo
-@app.route('/add/todo', methods=['GET','POST'])
+
+
+@app.route('/add/todo', methods=['GET', 'POST'])
 def addTodo():
-	if 'username' not in login_session:
-		return redirect(url_for('login'))
-	else:
-		email = login_session['email']
-	if(request.method=='GET'):
-		return render_template('add_todo.html')
-	if (request.method=='POST'):
-		name=request.form['name']
-		description=request.form['description']
-		minutes = request.form['minutes']
-		todo=Todo(name=name, description = description, minutes = minutes)
-		session.add(todo)
-		session.commit()
-		return redirect(url_for('allTodo'))
+    if 'username' not in login_session:
+        return redirect(url_for('login'))
+    else:
+        email = login_session['email']
+    if(request.method == 'GET'):
+        return render_template('add_todo.html')
+    if (request.method == 'POST'):
+        name = request.form['name']
+        description = request.form['description']
+        minutes = request.form['minutes']
+        todo = Todo(name=name, description=description, minutes=minutes)
+        session.add(todo)
+        session.commit()
+        return redirect(url_for('allTodo'))
 
 
 @app.route('/view/<int:todo_id>/')
 def viewTodo(todo_id):
-	if 'username' not in login_session:
-		return redirect(url_for('login'))
-	todo = session.query(Todo).get(todo_id)
-	return(render_template('viewTodo.html', todo= todo))
+    if 'username' not in login_session:
+        return redirect(url_for('login'))
+    todo = session.query(Todo).get(todo_id)
+    return(render_template('viewTodo.html', todo=todo))
+
 
 @app.route('/view/<int:todo_id>/JSON')
 def viewTodoJSON(todo_id):
-	todo = session.query(Todo).get(todo_id)
-	return jsonify(todo.serialize)
+    todo = session.query(Todo).get(todo_id)
+    return jsonify(todo.serialize)
+
 
 @app.route('/edit/<int:todo_id>/', methods=['GET', 'POST'])
 def editTodo(todo_id):
-	if 'username' not in login_session:
-		return redirect(url_for('login'))
-	todo = session.query(Todo).get(todo_id) #  get the todo you want to edit
-	if (request.method=='GET'):
-	    return render_template('edit_todo.html', todo=todo) #  render the edit Todo template
-	if (request.method=='POST'):
-		todo.name=request.form['name']
-		todo.description=request.form['description']
-		todo.minutes = request.form['minutes']
-		session.add(todo)
-		session.commit()
-		return(redirect(url_for('allTodo')))
+    if 'username' not in login_session:
+        return redirect(url_for('login'))
+    todo = session.query(Todo).get(todo_id)  # get the todo you want to edit
+    if (request.method == 'GET'):
+        # render the edit Todo template
+        return render_template('edit_todo.html', todo=todo)
+    if (request.method == 'POST'):
+        todo.name = request.form['name']
+        todo.description = request.form['description']
+        todo.minutes = request.form['minutes']
+        session.add(todo)
+        session.commit()
+        return(redirect(url_for('allTodo')))
+
 
 @app.route('/delete/<int:todo_id>/')
 def deleteTodo(todo_id):
-	if 'username' not in login_session:
-		return redirect(url_for('login'))
-	todo=session.query(Todo).get(todo_id)
-	session.delete(todo)
-	return(redirect(url_for('allTodo')))
+    if 'username' not in login_session:
+        return redirect(url_for('login'))
+    todo = session.query(Todo).get(todo_id)
+    session.delete(todo)
+    return(redirect(url_for('allTodo')))
 
 
 if __name__ == '__main__':
-	app.debug = True
-	app.secret_key="secret_key"
-	app.run(host = '0.0.0.0', port= 5000)
+    app.debug = True
+    app.secret_key = "secret_key"
+    app.run(host='0.0.0.0', port=5000)
